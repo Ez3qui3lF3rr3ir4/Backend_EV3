@@ -2,7 +2,35 @@ from django.shortcuts import render
 from .models import *
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 from .models import Vehiculos, Registro, RegistroVehiculo
+from django.contrib.auth import logout
+from django.views.decorators.http import require_http_methods
+
+
+def _format_exception(e):
+    """Return a user-friendly string for ValidationError/IntegrityError or generic exceptions."""
+    try:
+        # Django ValidationError can have message_dict or messages
+        if hasattr(e, 'message_dict') and e.message_dict:
+            parts = []
+            for field, msgs in e.message_dict.items():
+                if isinstance(msgs, (list, tuple)):
+                    parts.append(f"{field}: {', '.join(msgs)}")
+                else:
+                    parts.append(f"{field}: {msgs}")
+            return '; '.join(parts)
+        if hasattr(e, 'messages') and e.messages:
+            return '; '.join(str(m) for m in e.messages)
+    except Exception:
+        pass
+    # IntegrityError or other exceptions
+    try:
+        return str(e)
+    except Exception:
+        return 'Error desconocido.'
 
 def index(request):
     # --- CUANDO SE ENVÍA UN FORMULARIO ---
@@ -17,18 +45,35 @@ def index(request):
                 v.marca = request.POST["marca"]
                 v.modelo = request.POST["modelo"]
                 v.vigente = "vigente" in request.POST
-                v.save()
+                try:
+                    v.full_clean()
+                    v.save()
+                    messages.success(request, "Vehículo actualizado correctamente.")
+                except (ValidationError, IntegrityError) as e:
+                    messages.error(request, f"Error al actualizar vehículo: {_format_exception(e)}")
             else:  # create
-                Vehiculos.objects.create(
-                    patente=request.POST["patente"],
-                    marca=request.POST["marca"],
-                    modelo=request.POST["modelo"],
-                )
+                try:
+                    v = Vehiculos(
+                        patente=request.POST["patente"],
+                        marca=request.POST["marca"],
+                        modelo=request.POST["modelo"],
+                    )
+                    v.full_clean()
+                    v.save()
+                    messages.success(request, "Vehículo creado correctamente.")
+                except IntegrityError:
+                    messages.error(request, f"La patente {request.POST.get('patente')} ya existe.")
+                except ValidationError as e:
+                    messages.error(request, f"Datos inválidos para vehículo: {_format_exception(e)}")
             return redirect("index")
 
         # Eliminar Vehiculo
         if "delete_vehiculo" in request.POST:
-            Vehiculos.objects.get(id=request.POST["vehiculo_id"]).delete()
+            try:
+                Vehiculos.objects.get(id=request.POST["vehiculo_id"]).delete()
+                messages.success(request, "Vehículo eliminado.")
+            except Exception as e:
+                messages.error(request, f"Error al eliminar vehículo: {_format_exception(e)}")
             return redirect("index")
 
         # Crear o actualizar Registro
@@ -39,17 +84,34 @@ def index(request):
                 r.tipo_registro = request.POST["tipo"]
                 r.descripcion = request.POST["descripcion"]
                 r.vigente = "vigente" in request.POST
-                r.save()
+                try:
+                    r.full_clean()
+                    r.save()
+                    messages.success(request, "Registro actualizado correctamente.")
+                except (ValidationError, IntegrityError) as e:
+                    messages.error(request, f"Error al actualizar registro: {_format_exception(e)}")
             else:
-                Registro.objects.create(
-                    tipo_registro=request.POST["tipo"],
-                    descripcion=request.POST["descripcion"],
-                )
+                try:
+                    r = Registro(
+                        tipo_registro=request.POST["tipo"],
+                        descripcion=request.POST["descripcion"],
+                    )
+                    r.full_clean()
+                    r.save()
+                    messages.success(request, "Registro creado correctamente.")
+                except ValidationError as e:
+                    messages.error(request, f"Datos inválidos para registro: {_format_exception(e)}")
+                except IntegrityError as e:
+                    messages.error(request, f"Error al crear registro: {_format_exception(e)}")
             return redirect("index")
 
         # Eliminar Registro
         if "delete_registro" in request.POST:
-            Registro.objects.get(id=request.POST["registro_id"]).delete()
+            try:
+                Registro.objects.get(id=request.POST["registro_id"]).delete()
+                messages.success(request, "Registro eliminado.")
+            except Exception as e:
+                messages.error(request, f"Error al eliminar registro: {_format_exception(e)}")
             return redirect("index")
 
         # Crear / actualizar RegistroVehiculo
@@ -60,19 +122,36 @@ def index(request):
             if id:
                 rv = RegistroVehiculo.objects.get(id=id)
                 rv.vehiculo_id = request.POST["vehiculo"]
-                rv.registros_id = request.POST["registro"]
+                rv.registro_id = request.POST["registro"]
                 rv.fecha_salida = fecha_salida
-                rv.save()
+                try:
+                    rv.full_clean()
+                    rv.save()
+                    messages.success(request, "Registro vehículo actualizado.")
+                except (ValidationError, IntegrityError) as e:
+                    messages.error(request, f"Error al actualizar registro vehículo: {_format_exception(e)}")
             else:
-                RegistroVehiculo.objects.create(
-                    vehiculos_id=request.POST["vehiculo"],
-                    registro_id=request.POST["registro"],
-                )
+                try:
+                    rv = RegistroVehiculo(
+                        vehiculo_id=request.POST["vehiculo"],
+                        registro_id=request.POST["registro"],
+                    )
+                    rv.full_clean()
+                    rv.save()
+                    messages.success(request, "Registro de vehículo creado.")
+                except ValidationError as e:
+                    messages.error(request, f"Datos inválidos para registro vehículo: {_format_exception(e)}")
+                except IntegrityError as e:
+                    messages.error(request, f"Error al crear registro vehículo: {_format_exception(e)}")
             return redirect("index")
 
         # Eliminar RegistroVehiculo
         if "delete_rv" in request.POST:
-            RegistroVehiculo.objects.get(id=request.POST["rv_id"]).delete()
+            try:
+                RegistroVehiculo.objects.get(id=request.POST["rv_id"]).delete()
+                messages.success(request, "Registro de vehículo eliminado.")
+            except Exception as e:
+                messages.error(request, f"Error al eliminar registro vehículo: {_format_exception(e)}")
             return redirect("index")
 
     # --- CARGAR DATOS PARA MOSTRAR ---
@@ -83,3 +162,11 @@ def index(request):
     }
 
     return render(request, "index.html", contexto)
+
+
+@require_http_methods(["GET", "POST"])
+def logout_view(request):
+    """Log out the user (accept GET or POST) and redirect to index with a message."""
+    logout(request)
+    messages.info(request, "Has cerrado sesión correctamente.")
+    return redirect('index')
