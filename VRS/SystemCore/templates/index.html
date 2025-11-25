@@ -1,11 +1,26 @@
 <!DOCTYPE html>
-<html>
+{% load static %}
+<html lang="es">
 <head>
-    <title>CRUD Unificado</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>CRUD Unificado</title>
+        <link rel="stylesheet" href="{% static 'SystemCore/css/style.css' %}">
 </head>
 <body>
+<div class="container">
 
-<h1>CRUD Unificado - Django</h1>
+<div class="header">
+</h1>
+    <h1 class="title">CRUD Unificado - Django</h1>
+    <div class="header-right">
+        <small class="muted">Interfaz simple para gestionar vehículos y registros</small>
+        <label class="theme-switch" for="theme-toggle">
+            <input type="checkbox" id="theme-toggle" aria-label="Alternar tema oscuro">
+            <span class="slider"></span>
+        </label>
+    </div>
+</div>
 
 <hr>
 
@@ -13,19 +28,30 @@
 <h2>Vehículos</h2>
 
 <!-- FORM CREAR / EDITAR VEHÍCULO -->
-<form method="POST">
+<form method="POST" class="card">
     {% csrf_token %}
 
     <input type="hidden" name="vehiculo_id" id="vehiculo_id">
 
-    Patente: <input name="patente" id="patente"><br>
-    Marca: <input name="marca" id="marca"><br>
-    Modelo: <input name="modelo" id="modelo"><br>
+        <div>
+            <label for="patente">Patente</label><br>
+            <input name="patente" id="patente" placeholder="ABC123">
+        </div>
+        <div>
+            <label for="marca">Marca</label><br>
+            <input name="marca" id="marca" placeholder="Toyota">
+        </div>
+        <div>
+            <label for="modelo">Modelo</label><br>
+            <input name="modelo" id="modelo" placeholder="Corolla">
+        </div>
+        <div class="form-actions">
+            <button type="submit" name="save_vehiculo" class="btn">Guardar</button>
+            <button type="reset" class="btn secondary">Limpiar</button>
+        </div>
+    </form>
 
-    <button type="submit" name="save_vehiculo">Guardar</button>
-</form>
-
-<table border="1">
+    <table class="data-table">
     <tr>
         <th>Patente</th>
         <th>Marca</th>
@@ -39,23 +65,24 @@
         <td>{{ v.marca }}</td>
         <td>{{ v.modelo }}</td>
         <td>
-            <!-- Botón editar -->
-            <button onclick="
+            <div class="actions">
+              <button class="btn" onclick="
                 document.getElementById('vehiculo_id').value='{{ v.id }}';
                 document.getElementById('patente').value='{{ v.patente }}';
                 document.getElementById('marca').value='{{ v.marca }}';
                 document.getElementById('modelo').value='{{ v.modelo }}';
-            ">Editar</button>
+              ">Editar</button>
 
-            <!-- eliminar -->
-            <form method="POST" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="vehiculo_id" value="{{ v.id }}">
-                <button type="submit" name="delete_vehiculo">Eliminar</button>
-            </form>
+              <form method="POST" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="vehiculo_id" value="{{ v.id }}">
+                  <button type="submit" name="delete_vehiculo" class="btn secondary">Eliminar</button>
+              </form>
+            </div>
         </td>
     </tr>
     {% endfor %}
+
 </table>
 
 <hr>
@@ -63,18 +90,27 @@
 <!-- ================= REGISTROS ================= -->
 <h2>Registros</h2>
 
-<form method="POST">
+<form method="POST" class="card">
     {% csrf_token %}
 
     <input type="hidden" name="registro_id" id="registro_id">
 
-    Tipo: <input name="tipo" id="tipo_reg"><br>
-    Descripción: <input name="descripcion" id="desc_reg"><br>
+        <div>
+            <label for="tipo_reg">Tipo</label><br>
+            <input name="tipo" id="tipo_reg" placeholder="Inspección">
+        </div>
+        <div>
+            <label for="desc_reg">Descripción</label><br>
+            <input name="descripcion" id="desc_reg" placeholder="Descripción corta">
+        </div>
 
-    <button type="submit" name="save_registro">Guardar</button>
-</form>
+        <div class="form-actions">
+            <button type="submit" name="save_registro" class="btn">Guardar</button>
+            <button type="reset" class="btn secondary">Limpiar</button>
+        </div>
+    </form>
 
-<table border="1">
+    <table class="data-table">
     <tr>
         <th>Tipo</th>
         <th>Descripción</th>
@@ -86,20 +122,23 @@
         <td>{{ r.tipo_registro }}</td>
         <td>{{ r.descripcion }}</td>
         <td>
-            <button onclick="
+            <div class="actions">
+              <button class="btn" onclick="
                 document.getElementById('registro_id').value='{{ r.id }}';
                 document.getElementById('tipo_reg').value='{{ r.tipo_registro }}';
                 document.getElementById('desc_reg').value='{{ r.descripcion }}';
-            ">Editar</button>
+              ">Editar</button>
 
-            <form method="POST" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="registro_id" value="{{ r.id }}">
-                <button type="submit" name="delete_registro">Eliminar</button>
-            </form>
+              <form method="POST" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="registro_id" value="{{ r.id }}">
+                  <button type="submit" name="delete_registro" class="btn secondary">Eliminar</button>
+              </form>
+            </div>
         </td>
     </tr>
     {% endfor %}
+
 </table>
 
 <hr>
@@ -107,32 +146,41 @@
 <!-- =============== REGISTRO VEHICULO =============== -->
 <h2>Registro de Vehículos</h2>
 
-<form method="POST">
+<form method="POST" class="card">
     {% csrf_token %}
 
     <input type="hidden" name="rv_id" id="rv_id">
 
-    Vehículo:
-    <select name="vehiculo" id="rv_vehiculo">
+        <div>
+            <label for="rv_vehiculo">Vehículo</label><br>
+            <select name="vehiculo" id="rv_vehiculo">
         {% for v in vehiculos %}
         <option value="{{ v.id }}">{{ v.patente }}</option>
         {% endfor %}
     </select>
+        </div>
 
-    Registro:
-    <select name="registro" id="rv_registro">
+        <div>
+            <label for="rv_registro">Registro</label><br>
+            <select name="registro" id="rv_registro">
         {% for r in registros %}
         <option value="{{ r.id }}">{{ r.tipo_registro }}</option>
         {% endfor %}
     </select>
+        </div>
 
-    Fecha salida:
-    <input type="datetime-local" name="fecha_salida" id="rv_salida">
+        <div>
+            <label for="rv_salida">Fecha salida</label><br>
+            <input type="datetime-local" name="fecha_salida" id="rv_salida">
+        </div>
 
-    <button type="submit" name="save_rv">Guardar</button>
-</form>
+        <div class="form-actions">
+            <button type="submit" name="save_rv" class="btn">Guardar</button>
+            <button type="reset" class="btn secondary">Limpiar</button>
+        </div>
+    </form>
 
-<table border="1">
+    <table class="data-table">
     <tr>
         <th>Vehículo</th>
         <th>Registro</th>
@@ -149,22 +197,27 @@
         <td>{{ rv.fecha_salida }}</td>
 
         <td>
-            <button onclick="
-                document.getElementById('rv_id').value='{{ rv.id }}';
-                document.getElementById('rv_vehiculo').value='{{ rv.vehiculo.id }}';
-                document.getElementById('rv_registro').value='{{ rv.registro.id }}';
-                document.getElementById('rv_salida').value='{{ rv.fecha_salida|date:'Y-m-d\\TH:i' }}';
-            ">Editar</button>
+            <div class="actions">
+                            <button class="btn" onclick="
+                                document.getElementById('rv_id').value='{{ rv.id }}';
+                                document.getElementById('rv_vehiculo').value='{{ rv.vehiculo.id }}';
+                                document.getElementById('rv_registro').value='{{ rv.registro.id }}';
+                                document.getElementById('rv_salida').value='{{ rv.fecha_salida|date:"Y-m-d\\TH:i" }}';
+                            ">Editar</button>
 
-            <form method="POST" style="display:inline;">
-                {% csrf_token %}
-                <input type="hidden" name="rv_id" value="{{ rv.id }}">
-                <button type="submit" name="delete_rv">Eliminar</button>
-            </form>
+              <form method="POST" class="inline-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="rv_id" value="{{ rv.id }}">
+                  <button type="submit" name="delete_rv" class="btn secondary">Eliminar</button>
+              </form>
+            </div>
         </td>
     </tr>
     {% endfor %}
-</table>
+  </table>
+
+</div>
 
 </body>
+<script src="{% static 'SystemCore/js/theme.js' %}"></script>
 </html>
